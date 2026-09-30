@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+data_lake/raw/*.json
+data_lake/processed/*.parquet
