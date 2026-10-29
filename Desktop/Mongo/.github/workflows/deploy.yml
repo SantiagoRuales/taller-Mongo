@@ -1,0 +1,53 @@
+name: Pipeline CI/CD - DataOps (Terraform & Python)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  ci-cd-dataops:
+    name: Validación y Despliegue DataOps
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Descargar el código del repositorio
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      # 2. Configurar entorno de Python
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 3. Instalar dependencias y validar los scripts de Python
+      - name: Instalar dependencias de Python
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest flake8
+
+      - name: Ejecutar pruebas de sintaxis y validación de scripts Python
+        run: |
+          echo "Validando sintaxis de todos los scripts del pipeline..."
+          python -m py_compile scripts/*.py
+          echo "✅ Todos los scripts en scripts/ compilaron correctamente."
+
+      # 4. Configurar y validar infraestructura con Terraform
+      - name: Configurar Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Inicializar Terraform (terraform init)
+        run: terraform init
+
+      - name: Validar sintaxis de Terraform (terraform validate)
+        run: terraform validate
+
+      - name: Generar plan de infraestructura (terraform plan)
+        run: terraform plan -input=false
+
+      # 5. Despliegue automático si todas las pruebas pasaron
+      - name: Desplegar cambios de infraestructura (terraform apply)
+        run: terraform apply -auto-approve -input=false
