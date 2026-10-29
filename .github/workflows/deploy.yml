@@ -1,0 +1,40 @@
+name: Pipeline CI/CD - DataOps (Terraform & Python)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  ci-cd-dataops:
+    name: Validación y Despliegue DataOps
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validar sintaxis de scripts Python
+        run: |
+          python -m py_compile scripts/*.py
+          echo "✅ Scripts de Python validados correctamente"
+
+      - name: Configurar Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Inicializar y validar Terraform
+        run: |
+          terraform init
+          terraform validate
+
+      - name: Ejecutar Terraform Plan
+        run: terraform plan -input=false
+
+      - name: Desplegar cambios (Terraform Apply)
+        run: terraform apply -auto-approve -input=false
